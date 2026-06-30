@@ -111,9 +111,6 @@ with summary_tab:
 # ======================================================
 # AGRICULTURE
 # ======================================================
-# ======================================================
-# AGRICULTURE
-# ======================================================
 
 with agri_tab:
 
@@ -190,9 +187,46 @@ with agri_tab:
         column
     )
 
+  st.divider()
+
+st.subheader("🌿 Land Overview")
+
+col1, col2, col3 = st.columns(3)
+
+total_land = get_metric(
+    ws,
+    "Total Land Surface (Ha)",
+    column
+)
+
+certified = get_metric(
+    ws,
+    "Certified Organic (Ha)",
+    column
+)
+
+conversion = get_metric(
+    ws,
+    "In Conversion (Ha)",
+    column
+)
+
+with col1:
     st.metric(
         "Total Land Surface",
-        value if value is not None else "—"
+        total_land if total_land is not None else "—"
+    )
+
+with col2:
+    st.metric(
+        "Certified Organic",
+        certified if certified is not None else "—"
+    )
+
+with col3:
+    st.metric(
+        "In Conversion",
+        conversion if conversion is not None else "—"
     )
 
 # ======================================================
