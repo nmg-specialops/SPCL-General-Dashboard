@@ -1,67 +1,131 @@
-# excel_parser.py
+"""
+excel_parser.py
 
-EXCLUDED_HEADERS = {
+Parses the SPCL dashboard workbook into a structure that the
+Streamlit dashboard can easily use.
+"""
+
+from openpyxl.cell.cell import MergedCell
+
+# ------------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------------
+
+IGNORE_HEADERS = [
     "TOTAL Smallholders",
     "TOTAL Serendipalm",
     "DAF Smallholders",
     "DAF Serendipalm",
     "TOTAL DAF",
     "TOTAL All Locations",
-}
+]
 
+SMALLHOLDER_HEADERS = [
+    "SPCL Smallholders",
+    "Tanoobia Smallholders",
+]
+
+
+# ------------------------------------------------------------------
+# Helper
+# ------------------------------------------------------------------
+
+def clean(value):
+    if value is None:
+        return ""
+
+    return str(value).strip()
+
+
+# ------------------------------------------------------------------
+# Agriculture Structure
+# ------------------------------------------------------------------
 
 def agriculture_structure(sheet):
-    """
-    Reads the Agriculture sheet and returns a structure
-    describing Projects, Locations and Years.
-    """
 
-    data = {
-        "Serendipalm": {},
-        "SPCL Smallholders": {},
-        "Tanoobia Smallholders": {}
+    structure = {
+        "projects": {
+            "Serendipalm": {
+                "locations": {}
+            },
+            "SPCL Smallholders": {},
+            "Tanoobia Smallholders": {}
+        }
     }
 
     col = 2
 
     while col <= sheet.max_column:
 
-        header = sheet.cell(row=6, column=col).value
+        header = clean(sheet.cell(row=6, column=col).value)
 
-        if header is None:
+        if header == "":
             col += 1
             continue
 
-        # Ignore reporting columns
-        if header in EXCLUDED_HEADERS:
+        if header in IGNORE_HEADERS:
             break
 
-        years = []
+        years = [
+            sheet.cell(row=7, column=col).value,
+            sheet.cell(row=7, column=col + 1).value,
+            sheet.cell(row=7, column=col + 2).value,
+        ]
 
-        for offset in range(3):
-            years.append(sheet.cell(row=7, column=col + offset).value)
+        # ----------------------------
+        # Smallholder projects
+        # ----------------------------
 
-        if header == "SPCL Smallholders":
+        if header in SMALLHOLDER_HEADERS:
 
-            data["SPCL Smallholders"] = {
+            structure["projects"][header] = {
                 "column": col,
                 "years": years
             }
 
-        elif header == "Tanoobia Smallholders":
-
-            data["Tanoobia Smallholders"] = {
-                "column": col,
-                "years": years
-            }
+        # ----------------------------
+        # Serendipalm locations
+        # ----------------------------
 
         else:
 
-            data["Serendipalm"][header] = {
+            structure["projects"]["Serendipalm"]["locations"][header] = {
                 "column": col,
                 "years": years
             }
 
         col += 3
 
-    return data
+    return structure
+
+
+# ------------------------------------------------------------------
+# Metric Lookup
+# ------------------------------------------------------------------
+
+def get_metric(sheet, metric_name, column):
+
+    for row in range(1, sheet.max_row + 1):
+
+        value = clean(sheet.cell(row=row, column=1).value)
+
+        if value == metric_name:
+
+            return sheet.cell(row=row, column=column).value
+
+    return None
+
+
+# ------------------------------------------------------------------
+# Year -> Column
+# ------------------------------------------------------------------
+
+def get_column(base_column, year):
+
+    year_map = {
+        2026: 0,
+        2025: 1,
+        2024: 2,
+    }
+
+    return base_column + year_map[year]
