@@ -116,15 +116,15 @@ with agri_tab:
 
     st.header("🌱 Agriculture")
 
-    # Load Agriculture worksheet
+    # -----------------------------
+    # Load worksheet
+    # -----------------------------
     ws = get_sheet(wb, "Agriculture")
-
     structure = agriculture_structure(ws)
 
     # -----------------------------
-    # Project
+    # Project selector
     # -----------------------------
-
     projects = list(structure["projects"].keys())
 
     project = st.selectbox(
@@ -136,7 +136,6 @@ with agri_tab:
     # -----------------------------
     # Serendipalm
     # -----------------------------
-
     if project == "Serendipalm":
 
         locations = list(
@@ -162,8 +161,9 @@ with agri_tab:
     # -----------------------------
     # Smallholders / Tanoobia
     # -----------------------------
-
     else:
+
+        location = None
 
         years = structure["projects"][project]["years"]
 
@@ -179,56 +179,96 @@ with agri_tab:
 
     st.divider()
 
-    st.subheader("Surface Land")
+    # =================================================
+    # LAND OVERVIEW
+    # =================================================
 
-    value = get_metric(
+    st.subheader("🌿 Land Overview")
+
+    col1, col2, col3 = st.columns(3)
+
+    total_land = get_metric(
         ws,
         "Total Land Surface (Ha)",
         column
     )
 
-  st.divider()
-
-st.subheader("🌿 Land Overview")
-
-col1, col2, col3 = st.columns(3)
-
-total_land = get_metric(
-    ws,
-    "Total Land Surface (Ha)",
-    column
-)
-
-certified = get_metric(
-    ws,
-    "Certified Organic (Ha)",
-    column
-)
-
-conversion = get_metric(
-    ws,
-    "In Conversion (Ha)",
-    column
-)
-
-with col1:
-    st.metric(
-        "Total Land Surface",
-        total_land if total_land is not None else "—"
+    certified = get_metric(
+        ws,
+        "Certified Organic (Ha)",
+        column
     )
 
-with col2:
-    st.metric(
-        "Certified Organic",
-        certified if certified is not None else "—"
+    conversion = get_metric(
+        ws,
+        "In Conversion (Ha)",
+        column
     )
 
-with col3:
-    st.metric(
-        "In Conversion",
-        conversion if conversion is not None else "—"
+    with col1:
+        st.metric(
+            "Total Land Surface",
+            total_land if total_land is not None else "—"
+        )
+
+    with col2:
+        st.metric(
+            "Certified Organic",
+            certified if certified is not None else "—"
+        )
+
+    with col3:
+        st.metric(
+            "In Conversion",
+            conversion if conversion is not None else "—"
+        )
+
+    st.divider()
+
+    # =================================================
+    # PLANTATION
+    # =================================================
+
+    st.subheader("🌴 Plantation")
+
+    col1, col2, col3 = st.columns(3)
+
+    palm = get_metric(
+        ws,
+        "Palm Area (Ha)",
+        column
     )
 
+    conservation = get_metric(
+        ws,
+        "Conservation Area (Ha)",
+        column
+    )
+
+    roc = get_metric(
+        ws,
+        "ROC (Ha)",
+        column
+    )
+
+    with col1:
+        st.metric(
+            "Palm Area",
+            palm if palm is not None else "—"
+        )
+
+    with col2:
+        st.metric(
+            "Conservation Area",
+            conservation if conservation is not None else "—"
+        )
+
+    with col3:
+        st.metric(
+            "ROC",
+            roc if roc is not None else "—"
+        )
+        
 # ======================================================
 # PRODUCTION
 # ======================================================
