@@ -111,78 +111,90 @@ with summary_tab:
 # ======================================================
 # AGRICULTURE
 # ======================================================
+# ======================================================
+# AGRICULTURE
+# ======================================================
 
 with agri_tab:
 
     st.header("🌱 Agriculture")
 
-# Load Agriculture sheet
-ws = get_sheet(wb, "Agriculture")
+    # Load Agriculture worksheet
+    ws = get_sheet(wb, "Agriculture")
 
-structure = agriculture_structure(ws)
+    structure = agriculture_structure(ws)
 
-projects = list(structure["projects"].keys())
+    # -----------------------------
+    # Project
+    # -----------------------------
 
-project = st.selectbox(
-    "Project",
-    projects
-)
+    projects = list(structure["projects"].keys())
 
-# ---------------------------------
-# Serendipalm
-# ---------------------------------
-
-if project == "Serendipalm":
-
-    locations = list(
-        structure["projects"]["Serendipalm"]["locations"].keys()
+    project = st.selectbox(
+        "Project",
+        projects,
+        key="agri_project"
     )
 
-    location = st.selectbox(
-        "Location",
-        locations
+    # -----------------------------
+    # Serendipalm
+    # -----------------------------
+
+    if project == "Serendipalm":
+
+        locations = list(
+            structure["projects"]["Serendipalm"]["locations"].keys()
+        )
+
+        location = st.selectbox(
+            "Location",
+            locations,
+            key="agri_location"
+        )
+
+        years = structure["projects"]["Serendipalm"]["locations"][location]["years"]
+
+        year = st.selectbox(
+            "Year",
+            years,
+            key="agri_year"
+        )
+
+        base_column = structure["projects"]["Serendipalm"]["locations"][location]["column"]
+
+    # -----------------------------
+    # Smallholders / Tanoobia
+    # -----------------------------
+
+    else:
+
+        years = structure["projects"][project]["years"]
+
+        year = st.selectbox(
+            "Year",
+            years,
+            key="agri_year"
+        )
+
+        base_column = structure["projects"][project]["column"]
+
+    column = get_column(base_column, year)
+
+    st.divider()
+
+    st.subheader("Surface Land")
+
+    value = get_metric(
+        ws,
+        "Total Land Surface (Ha)",
+        column
     )
 
-    years = structure["projects"]["Serendipalm"]["locations"][location]["years"]
-
-    year = st.selectbox(
-        "Year",
-        years
+    st.metric(
+        "Total Land Surface",
+        value if value is not None else "—"
     )
 
-    base_column = structure["projects"]["Serendipalm"]["locations"][location]["column"]
-
-# ---------------------------------
-# Smallholders / Tanoobia
-# ---------------------------------
-
-else:
-
-    years = structure["projects"][project]["years"]
-
-    year = st.selectbox(
-        "Year",
-        years
-    )
-
-    base_column = structure["projects"][project]["column"]
-
-column = get_column(base_column, year)
-
-st.divider()
-
-st.subheader("Surface Land")
-
-value = get_metric(
-    ws,
-    "Total Land Surface (Ha)",
-    column
-)
-
-st.metric(
-    "Total Land Surface",
-    value if value else "—"
-)
 # ======================================================
 # PRODUCTION
 # ======================================================
