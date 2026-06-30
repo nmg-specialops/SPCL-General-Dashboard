@@ -1,12 +1,5 @@
 import streamlit as st
 
-from pages.agriculture import agriculture_page
-from pages.production import production_page
-from pages.social import social_page
-from pages.financial import financial_page
-from pages.other import other_page
-from pages.summary import summary_page
-
 st.set_page_config(
     page_title="SPCL Dashboard",
     layout="wide"
@@ -14,29 +7,63 @@ st.set_page_config(
 
 st.title("SPCL Dashboard")
 
-tab_summary, tab_agri, tab_prod, tab_social, tab_fin, tab_other = st.tabs([
-    "📊 Summary",
-    "🌱 Agriculture",
-    "🏭 Production",
-    "👥 Social",
-    "💰 Financial",
-    "📋 Other"
-])
+# -------------------------------
+# Navigation
+# -------------------------------
+tab_agri, tab_prod, tab_social, tab_fin, tab_other = st.tabs(
+    [
+        "🌱 Agriculture",
+        "🏭 Production",
+        "👥 Social",
+        "💰 Financial",
+        "📋 Other"
+    ]
+)
 
-with tab_summary:
-    summary_page()
-
+# =====================================================
+# AGRICULTURE
+# =====================================================
 with tab_agri:
-    agriculture_page()
+    st.header("Agriculture")
+    st.info("Agriculture indicators will be added here.")
 
+# =====================================================
+# PRODUCTION
+# =====================================================
 with tab_prod:
-    production_page()
+    st.header("Production")
+    st.info("Production indicators will be added here.")
 
+# =====================================================
+# SOCIAL
+# =====================================================
 with tab_social:
-    social_page()
 
+    st.header("Social")
+
+    social_items = [
+        "Education",
+        "Water & Sanitation",
+        "Infrastructure",
+        "Other"
+    ]
+
+    for item in social_items:
+        st.metric(
+            label=item,
+            value="0"
+        )
+
+# =====================================================
+# FINANCIAL
+# =====================================================
 with tab_fin:
-    financial_page()
+    st.header("Financial")
+    st.info("Financial indicators will be added here.")
 
+# =====================================================
+# OTHER
+# =====================================================
 with tab_other:
-    other_page()
+    st.header("Other")
+    st.info("Additional indicators will be added here.")
