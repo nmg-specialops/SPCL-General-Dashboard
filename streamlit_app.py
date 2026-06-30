@@ -119,28 +119,26 @@ with agri_tab:
 
     st.header("🌱 Agriculture")
 
-if workbook_loaded:
+# Load Agriculture sheet
+ws = get_sheet(wb, "Agriculture")
 
-    ws = get_sheet(wb, "Agriculture")
+structure = agriculture_structure(ws)
 
-    # -----------------------------
-    # Read workbook structure
-    # -----------------------------
+projects = list(structure["projects"].keys())
 
-    projects = get_projects(ws)
+project = st.selectbox(
+    "Project",
+    projects
+)
 
-    if not projects:
-        st.error("No projects found.")
-        st.stop()
+# ---------------------------------
+# Serendipalm
+# ---------------------------------
 
-    project = st.selectbox(
-        "Project",
-        projects
-    )
+if project == "Serendipalm":
 
-    locations = get_locations(
-        ws,
-        project
+    locations = list(
+        structure["projects"]["Serendipalm"]["locations"].keys()
     )
 
     location = st.selectbox(
@@ -148,55 +146,46 @@ if workbook_loaded:
         locations
     )
 
-    years = get_years(
-        ws,
-        project,
-        location
-    )
+    years = structure["projects"]["Serendipalm"]["locations"][location]["years"]
 
     year = st.selectbox(
         "Year",
         years
     )
 
-    st.divider()
+    base_column = structure["projects"]["Serendipalm"]["locations"][location]["column"]
 
-    st.subheader("Surface Land")
-
-    total_surface = get_metric(
-        ws,
-        "Total Land Surface (Ha)",
-        project,
-        location,
-        year
-    )
-
-    cert_surface = get_metric(
-        ws,
-        "Certified Organic (Ha)",
-        project,
-        location,
-        year
-    )
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.metric(
-            "Total Land Surface",
-            total_surface if total_surface else "—"
-        )
-
-    with c2:
-        st.metric(
-            "Certified Organic",
-            cert_surface if cert_surface else "—"
-        )
+# ---------------------------------
+# Smallholders / Tanoobia
+# ---------------------------------
 
 else:
 
-    st.error(workbook_error)
+    years = structure["projects"][project]["years"]
 
+    year = st.selectbox(
+        "Year",
+        years
+    )
+
+    base_column = structure["projects"][project]["column"]
+
+column = get_column(base_column, year)
+
+st.divider()
+
+st.subheader("Surface Land")
+
+value = get_metric(
+    ws,
+    "Total Land Surface (Ha)",
+    column
+)
+
+st.metric(
+    "Total Land Surface",
+    value if value else "—"
+)
 # ======================================================
 # PRODUCTION
 # ======================================================
