@@ -13,14 +13,6 @@ import streamlit as st
 import pandas as pd
 import requests
 from io import BytesIO
-from dashboard_utils import (
-    load_workbook_from_dropbox,
-    get_sheet,
-    get_projects,
-    get_locations,
-    get_years,
-    get_metric,
-)
 
 # ======================================================
 # CONFIGURATION
