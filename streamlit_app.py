@@ -1,4 +1,30 @@
 import streamlit as st
+import requests
+from io import BytesIO
+from openpyxl import load_workbook
+
+# -------------------------------------
+# Dropbox Excel file
+# -------------------------------------
+DROPBOX_URL = "https://www.dropbox.com/scl/fi/pm80k4kjyzqz8yez7sffu/SPCL_DataCollection-MasterSheet_forDASHBOARD.xlsx?rlkey=3zehft3tkllkl789hdptna4f3&st=4cmf6srh&dl=1"
+
+@st.cache_resource
+def load_workbook_from_dropbox():
+
+    response = requests.get(DROPBOX_URL)
+    response.raise_for_status()
+
+    workbook = load_workbook(
+        BytesIO(response.content),
+        data_only=True
+    )
+
+    return workbook
+
+wb = load_workbook_from_dropbox()
+ws = wb.active
+
+import streamlit as st
 
 st.set_page_config(
     page_title="SPCL Dashboard",
