@@ -1,8 +1,12 @@
 import streamlit as st
+import pandas as pd
+import requests
+from io import BytesIO
+from openpyxl import load_workbook
 
-# --------------------------------------------------
-# PAGE CONFIGURATION
-# --------------------------------------------------
+# ======================================================
+# CONFIGURATION
+# ======================================================
 
 st.set_page_config(
     page_title="SPCL General Dashboard",
@@ -10,27 +14,84 @@ st.set_page_config(
     layout="wide"
 )
 
-# --------------------------------------------------
+DROPBOX_URL = (
+    "https://www.dropbox.com/scl/fi/"
+    "pm80k4kjyzqz8yez7sffu/"
+    "SPCL_DataCollection-MasterSheet_forDASHBOARD.xlsx"
+    "?rlkey=3zehft3tkllkl789hdptna4f3"
+    "&st=phue6k1f"
+    "&dl=1"
+)
+
+# ======================================================
+# LOAD WORKBOOK
+# ======================================================
+
+@st.cache_data(show_spinner=False)
+def load_workbook_from_dropbox():
+
+    response = requests.get(DROPBOX_URL)
+
+    response.raise_for_status()
+
+    workbook = load_workbook(
+        filename=BytesIO(response.content),
+        data_only=True
+    )
+
+    return workbook
+
+# ======================================================
+# LOAD DATA
+# ======================================================
+
+try:
+
+    wb = load_workbook_from_dropbox()
+
+    workbook_loaded = True
+
+except Exception as e:
+
+    workbook_loaded = False
+
+    workbook_error = str(e)
+
+# ======================================================
 # TITLE
-# --------------------------------------------------
+# ======================================================
 
-st.title("SPCL General Dashboard")
-st.caption("Live data loaded from the SPCL Master Workbook")
+st.title("🌍 SPCL General Dashboard")
 
-# --------------------------------------------------
-# REFRESH BUTTON
-# --------------------------------------------------
+st.caption("Live data from Dropbox Excel Workbook")
 
-if st.button("🔄 Refresh Dashboard"):
-    st.success("Dashboard refreshed.")
+col1, col2 = st.columns([1,1])
+
+with col1:
+
+    if st.button("🔄 Refresh Dashboard"):
+
+        st.cache_data.clear()
+
+        st.rerun()
+
+with col2:
+
+    if workbook_loaded:
+
+        st.success("Workbook Connected")
+
+    else:
+
+        st.error("Workbook Not Connected")
 
 st.divider()
 
-# --------------------------------------------------
-# DASHBOARD TABS
-# --------------------------------------------------
+# ======================================================
+# TABS
+# ======================================================
 
-tab_summary, tab_agri, tab_prod, tab_social, tab_fin, tab_other = st.tabs(
+summary_tab, agri_tab, production_tab, social_tab, financial_tab, other_tab = st.tabs(
     [
         "📊 Summary",
         "🌱 Agriculture",
@@ -41,123 +102,121 @@ tab_summary, tab_agri, tab_prod, tab_social, tab_fin, tab_other = st.tabs(
     ]
 )
 
-# ==================================================
+# ======================================================
 # SUMMARY
-# ==================================================
+# ======================================================
 
-with tab_summary:
+with summary_tab:
 
     st.header("Executive Summary")
 
-    st.info(
-        "This page will be built after all dashboard sections are complete."
-    )
+    st.info("Summary dashboard will be added after all sections are complete.")
 
-# ==================================================
+# ======================================================
 # AGRICULTURE
-# ==================================================
+# ======================================================
 
-with tab_agri:
+with agri_tab:
 
     st.header("🌱 Agriculture")
 
-    st.markdown("### Surface Land")
+    if workbook_loaded:
 
-    col1, col2, col3 = st.columns(3)
+        ws = wb["Agriculture"]
 
-    with col1:
-        st.metric("Metric 1", "—")
+        st.success("Agriculture worksheet loaded successfully.")
 
-    with col2:
-        st.metric("Metric 2", "—")
+        st.subheader("Workbook Information")
 
-    with col3:
-        st.metric("Metric 3", "—")
+        col1, col2, col3 = st.columns(3)
 
-    st.divider()
+        with col1:
+            st.write("**Worksheet:** Agriculture")
 
-    st.markdown("### Certified Land")
+        with col2:
+            st.write("**Projects Found:**")
+            st.write("Serendipalm Land")
 
-    col1, col2, col3 = st.columns(3)
+        with col3:
+            st.write("**Years Found:**")
+            st.write("2026, 2025, 2024")
 
-    with col1:
-        st.metric("Metric 1", "—")
+        st.divider()
 
-    with col2:
-        st.metric("Metric 2", "—")
+        st.subheader("Preview")
 
-    with col3:
-        st.metric("Metric 3", "—")
+        preview = []
 
-    st.divider()
+        for row in range(5, 15):
 
-    st.markdown("### DAF")
+            preview.append(
+                [
+                    ws.cell(row=row, column=1).value,
+                    ws.cell(row=row, column=2).value,
+                    ws.cell(row=row, column=3).value,
+                    ws.cell(row=row, column=4).value,
+                ]
+            )
 
-    col1, col2, col3 = st.columns(3)
+        df = pd.DataFrame(
+            preview,
+            columns=[
+                "Metric",
+                "Col B",
+                "Col C",
+                "Col D"
+            ]
+        )
 
-    with col1:
-        st.metric("Metric 1", "—")
+        st.dataframe(df, use_container_width=True)
 
-    with col2:
-        st.metric("Metric 2", "—")
+        st.divider()
 
-    with col3:
-        st.metric("Metric 3", "—")
+        st.info(
+            "Next version will automatically detect Projects, "
+            "Locations, Years and populate KPI cards."
+        )
 
-    st.divider()
+    else:
 
-    st.markdown("### Farmers")
+        st.error(workbook_error)
 
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.metric("Metric 1", "—")
-
-    with col2:
-        st.metric("Metric 2", "—")
-
-    with col3:
-        st.metric("Metric 3", "—")
-
-    with col4:
-        st.metric("Metric 4", "—")
-
-# ==================================================
+# ======================================================
 # PRODUCTION
-# ==================================================
+# ======================================================
 
-with tab_prod:
+with production_tab:
 
     st.header("🏭 Production")
 
-    st.info("Production dashboard coming next.")
+    st.info("Coming soon.")
 
-# ==================================================
+# ======================================================
 # SOCIAL
-# ==================================================
+# ======================================================
 
-with tab_social:
+with social_tab:
 
     st.header("👥 Social")
 
-    st.info("Social dashboard coming after Production.")
+    st.info("Coming soon.")
 
-# ==================================================
+# ======================================================
 # FINANCIAL
-# ==================================================
+# ======================================================
 
-with tab_fin:
+with financial_tab:
 
     st.header("💰 Financial")
 
-    st.info("Financial dashboard coming after Social.")
+    st.info("Coming soon.")
 
-# ==================================================
+# ======================================================
 # OTHER
-# ==================================================
+# ======================================================
 
-with tab_other:
+with other_tab:
 
     st.header("📋 Other")
 
-    st.info("General worksheet information will appear here.")
+    st.info("General worksheet will appear here.")
