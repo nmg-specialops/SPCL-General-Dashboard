@@ -2,7 +2,14 @@ import streamlit as st
 import pandas as pd
 import requests
 from io import BytesIO
-from openpyxl import load_workbook
+from dashboard_utils import (
+    load_workbook_from_dropbox,
+    get_sheet,
+    get_projects,
+    get_locations,
+    get_years,
+    get_metric,
+)
 
 # ======================================================
 # CONFIGURATION
@@ -26,20 +33,6 @@ DROPBOX_URL = (
 # ======================================================
 # LOAD WORKBOOK
 # ======================================================
-
-@st.cache_data(show_spinner=False)
-def load_workbook_from_dropbox():
-
-    response = requests.get(DROPBOX_URL)
-
-    response.raise_for_status()
-
-    workbook = load_workbook(
-        filename=BytesIO(response.content),
-        data_only=True
-    )
-
-    return workbook
 
 # ======================================================
 # LOAD DATA
@@ -120,66 +113,83 @@ with agri_tab:
 
     st.header("🌱 Agriculture")
 
-    if workbook_loaded:
+if workbook_loaded:
 
-        ws = wb["Agriculture"]
+    ws = get_sheet(wb, "Agriculture")
 
-        st.success("Agriculture worksheet loaded successfully.")
+    # -----------------------------
+    # Read workbook structure
+    # -----------------------------
 
-        st.subheader("Workbook Information")
+    projects = get_projects(ws)
 
-        col1, col2, col3 = st.columns(3)
+    if not projects:
+        st.error("No projects found.")
+        st.stop()
 
-        with col1:
-            st.write("**Worksheet:** Agriculture")
+    project = st.selectbox(
+        "Project",
+        projects
+    )
 
-        with col2:
-            st.write("**Projects Found:**")
-            st.write("Serendipalm Land")
+    locations = get_locations(
+        ws,
+        project
+    )
 
-        with col3:
-            st.write("**Years Found:**")
-            st.write("2026, 2025, 2024")
+    location = st.selectbox(
+        "Location",
+        locations
+    )
 
-        st.divider()
+    years = get_years(
+        ws,
+        project,
+        location
+    )
 
-        st.subheader("Preview")
+    year = st.selectbox(
+        "Year",
+        years
+    )
 
-        preview = []
+    st.divider()
 
-        for row in range(5, 15):
+    st.subheader("Surface Land")
 
-            preview.append(
-                [
-                    ws.cell(row=row, column=1).value,
-                    ws.cell(row=row, column=2).value,
-                    ws.cell(row=row, column=3).value,
-                    ws.cell(row=row, column=4).value,
-                ]
-            )
+    total_surface = get_metric(
+        ws,
+        "Total Land Surface (Ha)",
+        project,
+        location,
+        year
+    )
 
-        df = pd.DataFrame(
-            preview,
-            columns=[
-                "Metric",
-                "Col B",
-                "Col C",
-                "Col D"
-            ]
+    cert_surface = get_metric(
+        ws,
+        "Certified Organic (Ha)",
+        project,
+        location,
+        year
+    )
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.metric(
+            "Total Land Surface",
+            total_surface if total_surface else "—"
         )
 
-        st.dataframe(df, use_container_width=True)
-
-        st.divider()
-
-        st.info(
-            "Next version will automatically detect Projects, "
-            "Locations, Years and populate KPI cards."
+    with c2:
+        st.metric(
+            "Certified Organic",
+            cert_surface if cert_surface else "—"
         )
 
-    else:
+else:
 
-        st.error(workbook_error)
+    st.error(workbook_error)
 
 # ======================================================
 # PRODUCTION
