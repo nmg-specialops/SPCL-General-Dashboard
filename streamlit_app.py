@@ -1,3 +1,9 @@
+from excel_parser import (
+    agriculture_structure,
+    get_metric,
+    get_column,
+)
+
 import streamlit as st
 import pandas as pd
 import requests
