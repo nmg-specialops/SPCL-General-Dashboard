@@ -129,3 +129,25 @@ def get_column(base_column, year):
     }
 
     return base_column + year_map[year]
+
+# ------------------------------------------------------------------
+# List Metrics
+# ------------------------------------------------------------------
+
+def list_metrics(sheet):
+    """
+    Returns every metric name found in Column A.
+    Useful for building the dashboard.
+    """
+
+    metrics = []
+
+    for row in range(1, sheet.max_row + 1):
+
+        value = clean(sheet.cell(row=row, column=1).value)
+
+        if value != "":
+
+            metrics.append(value)
+
+    return metrics
