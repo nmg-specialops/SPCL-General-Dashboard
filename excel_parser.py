@@ -41,13 +41,8 @@ def clean(value):
 def agriculture_structure(sheet):
 
     structure = {
-        "projects": {
-            "Serendipalm": {
-                "locations": {}
-            },
-            "SPCL Smallholders": {},
-            "Tanoobia Smallholders": {}
-        }
+        "projects": {},
+        "totals": {}
     }
 
     col = 2
@@ -60,7 +55,7 @@ def agriculture_structure(sheet):
             col += 1
             continue
 
-        if header in IGNORE_HEADERS:
+        if header in STOP_HEADERS:
             break
 
         years = [
@@ -69,32 +64,71 @@ def agriculture_structure(sheet):
             sheet.cell(row=7, column=col + 2).value,
         ]
 
-        # ----------------------------
-        # Smallholder projects
-        # ----------------------------
+        # ----------------------------------------
+        # TOTAL ALL LOCATIONS
+        # ----------------------------------------
 
-        if header in SMALLHOLDER_HEADERS:
+        if header == "TOTAL All Locations":
 
-            structure["projects"][header] = {
+            structure["totals"]["All Projects"] = {
                 "column": col,
-                "years": years
+                "years": years,
             }
 
-        # ----------------------------
-        # Serendipalm locations
-        # ----------------------------
+        # ----------------------------------------
+        # TOTAL SERENDIPALM
+        # ----------------------------------------
 
-        else:
+        elif header == "TOTAL Serendipalm":
+
+            structure["projects"]["Serendipalm"] = {
+                "column": col,
+                "years": years,
+                "locations": {}
+            }
+
+        # ----------------------------------------
+        # TOTAL SMALLHOLDERS
+        # ----------------------------------------
+
+        elif header == "TOTAL Smallholders":
+
+            structure["projects"]["SPCL Smallholders"] = {
+                "column": col,
+                "years": years,
+            }
+
+        # ----------------------------------------
+        # TANOOBIA
+        # ----------------------------------------
+
+        elif header == "Tanoobia Smallholders":
+
+            structure["projects"]["Tanoobia Smallholders"] = {
+                "column": col,
+                "years": years,
+            }
+
+        # ----------------------------------------
+        # Serendipalm estates
+        # ----------------------------------------
+
+        elif header not in SMALLHOLDER_HEADERS:
+
+            if "Serendipalm" not in structure["projects"]:
+
+                structure["projects"]["Serendipalm"] = {
+                    "locations": {}
+                }
 
             structure["projects"]["Serendipalm"]["locations"][header] = {
                 "column": col,
-                "years": years
+                "years": years,
             }
 
         col += 3
 
     return structure
-
 
 # ------------------------------------------------------------------
 # Metric Lookup
