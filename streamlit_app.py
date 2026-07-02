@@ -272,19 +272,19 @@ with agri_tab:
     with col1:
         st.metric(
             "Palm Area",
-            palm if palm is not None else "—"
+            format_value(palm)
         )
 
     with col2:
         st.metric(
             "Conservation Area",
-            conservation if conservation is not None else "—"
+            format_value(conservation)
         )
 
     with col3:
         st.metric(
             "ROC",
-            roc if roc is not None else "—"
+            format_value(roc)
         )
 # ======================================================
 # PRODUCTION
