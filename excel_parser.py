@@ -1,54 +1,34 @@
 """
 excel_parser.py
 
-Parses the SPCL dashboard workbook into a structure that the
-Streamlit dashboard can easily use.
+Parses the Agriculture worksheet into a structure that the
+Streamlit dashboard can use.
 """
 
-from openpyxl.cell.cell import MergedCell
-
-# ------------------------------------------------------------------
-# Configuration
-# ------------------------------------------------------------------
-
-STOP_HEADERS = [
-    "DAF Smallholders",
-    "DAF Serendipalm",
-    "TOTAL DAF",
-]
-
-SMALLHOLDER_HEADERS = [
-    "SPCL Smallholders",
-    "Tanoobia Smallholders",
-]
-
-
-# ------------------------------------------------------------------
-# Helper
-# ------------------------------------------------------------------
+# ============================================================
+# HELPERS
+# ============================================================
 
 def clean(value):
     if value is None:
         return ""
-
     return str(value).strip()
 
-# ------------------------------------------------------------------
-# Agriculture Structure
-# ------------------------------------------------------------------
+
+# ============================================================
+# AGRICULTURE STRUCTURE
+# ============================================================
 
 def agriculture_structure(sheet):
 
     structure = {
         "projects": {
+            "All Projects": {},
             "Serendipalm": {
-                "column": None,
-                "years": [],
                 "locations": {}
             },
             "SPCL Smallholders": {},
             "Tanoobia Smallholders": {},
-            "All Projects": {}
         }
     }
 
@@ -69,25 +49,22 @@ def agriculture_structure(sheet):
         ]
 
         # --------------------------------------------
-        # Serendipalm estates
+        # Workbook totals
         # --------------------------------------------
 
-        if header in [
-            "Tweapease",
-            "Abaam",
-            "SWARF",
-            "Old Cassava (other name?)",
-            "Fante-Onomabo",
-        ]:
+        if header == "TOTAL All Locations":
 
-            structure["projects"]["Serendipalm"]["locations"][header] = {
+            structure["projects"]["All Projects"] = {
                 "column": col,
                 "years": years,
             }
 
-        # --------------------------------------------
-        # Smallholders
-        # --------------------------------------------
+            break
+
+        elif header == "TOTAL Serendipalm":
+
+            structure["projects"]["Serendipalm"]["column"] = col
+            structure["projects"]["Serendipalm"]["years"] = years
 
         elif header == "SPCL Smallholders":
 
@@ -103,77 +80,63 @@ def agriculture_structure(sheet):
                 "years": years,
             }
 
-        # --------------------------------------------
-        # Workbook totals
-        # --------------------------------------------
+        # Ignore total columns we don't use
+        elif header in [
+            "TOTAL Smallholders",
+            "DAF Smallholders",
+            "DAF Serendipalm",
+            "TOTAL DAF",
+        ]:
+            pass
 
-        elif header == "TOTAL Smallholders":
+        # Everything else before the totals is a Serendipalm estate
+        else:
 
-            # We'll use this later for a combined smallholder view
-            structure["projects"]["Smallholders Total"] = {
+            structure["projects"]["Serendipalm"]["locations"][header] = {
                 "column": col,
                 "years": years,
             }
-
-        elif header == "TOTAL Serendipalm":
-
-            structure["projects"]["Serendipalm"]["column"] = col
-            structure["projects"]["Serendipalm"]["years"] = years
-
-        elif header == "TOTAL All Locations":
-
-            structure["projects"]["All Projects"] = {
-                "column": col,
-                "years": years,
-            }
-
-            # Nothing useful after this point
-            break
 
         col += 3
 
     return structure
 
-# ------------------------------------------------------------------
-# Metric Lookup
-# ------------------------------------------------------------------
+
+# ============================================================
+# YEAR -> COLUMN
+# ============================================================
+
+def get_column(base_column, year):
+
+    offsets = {
+        2026: 0,
+        2025: 1,
+        2024: 2,
+    }
+
+    return base_column + offsets[int(year)]
+
+
+# ============================================================
+# METRIC LOOKUP
+# ============================================================
 
 def get_metric(sheet, metric_name, column):
 
     for row in range(1, sheet.max_row + 1):
 
-        value = clean(sheet.cell(row=row, column=1).value)
-
-        if value == metric_name:
+        if clean(sheet.cell(row=row, column=1).value) == metric_name:
 
             return sheet.cell(row=row, column=column).value
 
     return None
 
 
-# ------------------------------------------------------------------
-# Year -> Column
-# ------------------------------------------------------------------
-
-def get_column(base_column, year):
-
-    year_map = {
-        2026: 0,
-        2025: 1,
-        2024: 2,
-    }
-
-    return base_column + year_map[year]
-
-# ------------------------------------------------------------------
-# List Metrics
-# ------------------------------------------------------------------
+# ============================================================
+# LIST METRICS
+# ============================================================
 
 def list_metrics(sheet):
-    """
-    Returns every metric name found in Column A.
-    Useful for building the dashboard.
-    """
 
     metrics = []
 
@@ -182,7 +145,6 @@ def list_metrics(sheet):
         value = clean(sheet.cell(row=row, column=1).value)
 
         if value != "":
-
             metrics.append(value)
 
     return metrics
