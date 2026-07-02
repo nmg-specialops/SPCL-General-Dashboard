@@ -11,13 +11,10 @@ from openpyxl.cell.cell import MergedCell
 # Configuration
 # ------------------------------------------------------------------
 
-IGNORE_HEADERS = [
-    "TOTAL Smallholders",
-    "TOTAL Serendipalm",
+STOP_HEADERS = [
     "DAF Smallholders",
     "DAF Serendipalm",
     "TOTAL DAF",
-    "TOTAL All Locations",
 ]
 
 SMALLHOLDER_HEADERS = [
