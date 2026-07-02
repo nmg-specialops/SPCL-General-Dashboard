@@ -226,20 +226,20 @@ with agri_tab:
     with col1:
         st.metric(
             "Total Land Surface",
-            total_land if total_land is not None else "—"
-        )
+            format_value(total_land)
+    )
 
     with col2:
         st.metric(
             "Certified Organic",
-            certified if certified is not None else "—"
-        )
+            format_value(certified)
+    )
 
     with col3:
         st.metric(
             "In Conversion",
-            conversion if conversion is not None else "—"
-        )
+            format_value(conversion)
+    )
 
     st.divider()
 
