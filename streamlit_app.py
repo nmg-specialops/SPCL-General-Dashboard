@@ -54,6 +54,24 @@ except Exception as e:
     workbook_error = str(e)
 
 # ======================================================
+# FORMAT HELPERS
+# ======================================================
+
+def format_value(value):
+
+    if value is None:
+        return "—"
+
+    if isinstance(value, (int, float)):
+
+        if value == int(value):
+            return f"{int(value):,}"
+
+        return f"{value:,.2f}"
+
+    return str(value)
+
+# ======================================================
 # TITLE
 # ======================================================
 
