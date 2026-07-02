@@ -33,7 +33,6 @@ def clean(value):
 
     return str(value).strip()
 
-
 # ------------------------------------------------------------------
 # Agriculture Structure
 # ------------------------------------------------------------------
@@ -41,8 +40,16 @@ def clean(value):
 def agriculture_structure(sheet):
 
     structure = {
-        "projects": {},
-        "totals": {}
+        "projects": {
+            "Serendipalm": {
+                "column": None,
+                "years": [],
+                "locations": {}
+            },
+            "SPCL Smallholders": {},
+            "Tanoobia Smallholders": {},
+            "All Projects": {}
+        }
     }
 
     col = 2
@@ -55,52 +62,39 @@ def agriculture_structure(sheet):
             col += 1
             continue
 
-        if header in STOP_HEADERS:
-            break
-
         years = [
             sheet.cell(row=7, column=col).value,
             sheet.cell(row=7, column=col + 1).value,
             sheet.cell(row=7, column=col + 2).value,
         ]
 
-        # ----------------------------------------
-        # TOTAL ALL LOCATIONS
-        # ----------------------------------------
+        # --------------------------------------------
+        # Serendipalm estates
+        # --------------------------------------------
 
-        if header == "TOTAL All Locations":
+        if header in [
+            "Tweapease",
+            "Abaam",
+            "SWARF",
+            "Old Cassava (other name?)",
+            "Fante-Onomabo",
+        ]:
 
-            structure["totals"]["All Projects"] = {
+            structure["projects"]["Serendipalm"]["locations"][header] = {
                 "column": col,
                 "years": years,
             }
 
-        # ----------------------------------------
-        # TOTAL SERENDIPALM
-        # ----------------------------------------
+        # --------------------------------------------
+        # Smallholders
+        # --------------------------------------------
 
-        elif header == "TOTAL Serendipalm":
-
-            structure["projects"]["Serendipalm"] = {
-                "column": col,
-                "years": years,
-                "locations": {}
-            }
-
-        # ----------------------------------------
-        # TOTAL SMALLHOLDERS
-        # ----------------------------------------
-
-        elif header == "TOTAL Smallholders":
+        elif header == "SPCL Smallholders":
 
             structure["projects"]["SPCL Smallholders"] = {
                 "column": col,
                 "years": years,
             }
-
-        # ----------------------------------------
-        # TANOOBIA
-        # ----------------------------------------
 
         elif header == "Tanoobia Smallholders":
 
@@ -109,22 +103,32 @@ def agriculture_structure(sheet):
                 "years": years,
             }
 
-        # ----------------------------------------
-        # Serendipalm estates
-        # ----------------------------------------
+        # --------------------------------------------
+        # Workbook totals
+        # --------------------------------------------
 
-        elif header not in SMALLHOLDER_HEADERS:
+        elif header == "TOTAL Smallholders":
 
-            if "Serendipalm" not in structure["projects"]:
-
-                structure["projects"]["Serendipalm"] = {
-                    "locations": {}
-                }
-
-            structure["projects"]["Serendipalm"]["locations"][header] = {
+            # We'll use this later for a combined smallholder view
+            structure["projects"]["Smallholders Total"] = {
                 "column": col,
                 "years": years,
             }
+
+        elif header == "TOTAL Serendipalm":
+
+            structure["projects"]["Serendipalm"]["column"] = col
+            structure["projects"]["Serendipalm"]["years"] = years
+
+        elif header == "TOTAL All Locations":
+
+            structure["projects"]["All Projects"] = {
+                "column": col,
+                "years": years,
+            }
+
+            # Nothing useful after this point
+            break
 
         col += 3
 
