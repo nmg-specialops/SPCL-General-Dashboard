@@ -1,3 +1,5 @@
+import streamlit.components.v1 as components
+
 from dashboard_utils import (
     load_workbook_from_dropbox,
     get_sheet,
@@ -286,6 +288,7 @@ with agri_tab:
             "ROC",
             format_value(roc)
         )
+
 # ======================================================
 # PRODUCTION
 # ======================================================
@@ -294,7 +297,15 @@ with production_tab:
 
     st.header("🏭 Production")
 
-    st.info("Coming soon.")
+    st.caption(
+        "Live Production Dashboard maintained by the Quality Team."
+    )
+
+    components.iframe(
+        "https://quality.serendipalm.com",
+        height=1800,
+        scrolling=True
+    )
 
 # ======================================================
 # SOCIAL
