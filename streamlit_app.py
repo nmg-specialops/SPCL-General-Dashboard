@@ -303,8 +303,8 @@ with production_tab:
 
     components.iframe(
         "https://quality.serendipalm.com",
-        height=1800,
-        scrolling=True
+        height=3200,
+        scrolling=False
     )
 
 # ======================================================
