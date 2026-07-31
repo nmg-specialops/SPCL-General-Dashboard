@@ -302,7 +302,7 @@ with production_tab:
     )
 
     components.iframe(
-        "http://213.202.221.179:8507",
+        "https://charts.serendipalm.com/",
         height=3200,
         scrolling=False
     )
