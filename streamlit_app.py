@@ -303,7 +303,7 @@ with production_tab:
 
     components.iframe(
         "https://charts.serendipalm.com/",
-        height=3200,
+        height=2400,
         scrolling=False
     )
 
