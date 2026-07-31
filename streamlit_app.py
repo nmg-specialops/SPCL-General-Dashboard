@@ -302,7 +302,7 @@ with production_tab:
     )
 
     components.iframe(
-        "http://213.202.221.179:8507/",
+        "http://213.202.221.179:8507",
         height=3200,
         scrolling=False
     )
