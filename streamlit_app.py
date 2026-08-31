@@ -393,10 +393,8 @@ with social_tab:
             format_value(total_female)
         )
 
-    st.divider()
-
     # --------------------------------------------------
-    # Employee breakdown
+    # Employee table
     # --------------------------------------------------
 
     employee_rows = []
@@ -429,13 +427,34 @@ with social_tab:
             hide_index=True
         )
 
+    # --------------------------------------------------
+    # Employee gender chart
+    # --------------------------------------------------
+
+    st.subheader(
+        "Gender Distribution by Employee Type"
+    )
+
+    if employee_rows:
+
+        chart_df = employee_df.set_index(
+            "Employee Type"
+        )[["Male", "Female"]]
+
+        st.bar_chart(
+            chart_df,
+            use_container_width=True
+        )
+
     st.divider()
 
     # ==================================================
     # FAIR TRADE PREMIUM
     # ==================================================
 
-    st.subheader("🤝 Fair Trade Premium Spending")
+    st.subheader(
+        "🤝 Fair Trade Premium Spending"
+    )
 
     fair_trade_data = social_fair_trade_data(
         social_ws
@@ -463,8 +482,6 @@ with social_tab:
         format_value(total_spending)
     )
 
-    st.divider()
-
     # --------------------------------------------------
     # Spending table
     # --------------------------------------------------
@@ -490,6 +507,71 @@ with social_tab:
             spending_df,
             use_container_width=True,
             hide_index=True
+        )
+
+    # --------------------------------------------------
+    # Spending chart
+    # --------------------------------------------------
+
+    st.subheader(
+        "Fair Trade Premium Spending by Category"
+    )
+
+    if spending_rows:
+
+        spending_chart = spending_df.set_index(
+            "Category"
+        )[["Amount"]]
+
+        st.bar_chart(
+            spending_chart,
+            use_container_width=True
+        )
+
+    st.divider()
+
+    # ==================================================
+    # FAIR TRADE HISTORICAL TREND
+    # ==================================================
+
+    st.subheader(
+        "📈 Fair Trade Premium Spending Over Time"
+    )
+
+    historical_rows = []
+
+    for year in sorted(
+        fair_trade_data.keys()
+    ):
+
+        year_total = 0
+
+        for item in fair_trade_data[year]:
+
+            if item["Category"] == "Total":
+
+                year_total = item["Amount"]
+
+        historical_rows.append({
+            "Year": year,
+            "Total Spending": year_total,
+        })
+
+    if historical_rows:
+
+        historical_df = pd.DataFrame(
+            historical_rows
+        )
+
+        historical_df = historical_df.set_index(
+            "Year"
+        )
+
+        st.line_chart(
+            historical_df[
+                ["Total Spending"]
+            ],
+            use_container_width=True
         )
 
 # ======================================================
