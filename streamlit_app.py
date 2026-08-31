@@ -315,7 +315,180 @@ with social_tab:
 
     st.header("👥 Social")
 
-    st.info("Coming soon.")
+    st.caption(
+        "Social impact data from the SPCL master workbook."
+    )
+
+    # --------------------------------------------------
+    # Load Social worksheet
+    # --------------------------------------------------
+
+    social_ws = get_sheet(wb, "Social")
+
+    # --------------------------------------------------
+    # Year selector
+    # --------------------------------------------------
+
+    social_year = st.selectbox(
+        "Year",
+        [2026, 2025, 2024, 2023, 2022],
+        key="social_year"
+    )
+
+    st.divider()
+
+    # ==================================================
+    # SERENDIPALM EMPLOYEES
+    # ==================================================
+
+    st.subheader("👷 Serendipalm Employees")
+
+    employee_data = social_employee_data(
+        social_ws
+    )
+
+    selected_employee_data = employee_data.get(
+        social_year,
+        []
+    )
+
+    # --------------------------------------------------
+    # Employee totals
+    # --------------------------------------------------
+
+    total_male = 0
+    total_female = 0
+
+    for item in selected_employee_data:
+
+        if item["Type"] == "Total":
+
+            total_male = item["Male"]
+            total_female = item["Female"]
+
+    total_employees = total_male + total_female
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.metric(
+            "Total Employees",
+            format_value(total_employees)
+        )
+
+    with col2:
+
+        st.metric(
+            "Male",
+            format_value(total_male)
+        )
+
+    with col3:
+
+        st.metric(
+            "Female",
+            format_value(total_female)
+        )
+
+    st.divider()
+
+    # --------------------------------------------------
+    # Employee breakdown
+    # --------------------------------------------------
+
+    employee_rows = []
+
+    for item in selected_employee_data:
+
+        if item["Type"] != "Total":
+
+            total = (
+                item["Male"] +
+                item["Female"]
+            )
+
+            employee_rows.append({
+                "Employee Type": item["Type"],
+                "Male": item["Male"],
+                "Female": item["Female"],
+                "Total": total,
+            })
+
+    if employee_rows:
+
+        employee_df = pd.DataFrame(
+            employee_rows
+        )
+
+        st.dataframe(
+            employee_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    st.divider()
+
+    # ==================================================
+    # FAIR TRADE PREMIUM
+    # ==================================================
+
+    st.subheader("🤝 Fair Trade Premium Spending")
+
+    fair_trade_data = social_fair_trade_data(
+        social_ws
+    )
+
+    selected_fair_trade = fair_trade_data.get(
+        social_year,
+        []
+    )
+
+    # --------------------------------------------------
+    # Total spending
+    # --------------------------------------------------
+
+    total_spending = 0
+
+    for item in selected_fair_trade:
+
+        if item["Category"] == "Total":
+
+            total_spending = item["Amount"]
+
+    st.metric(
+        "Total Fair Trade Premium Spending",
+        format_value(total_spending)
+    )
+
+    st.divider()
+
+    # --------------------------------------------------
+    # Spending table
+    # --------------------------------------------------
+
+    spending_rows = []
+
+    for item in selected_fair_trade:
+
+        if item["Category"] != "Total":
+
+            spending_rows.append({
+                "Category": item["Category"],
+                "Amount": item["Amount"],
+            })
+
+    if spending_rows:
+
+        spending_df = pd.DataFrame(
+            spending_rows
+        )
+
+        st.dataframe(
+            spending_df,
+            use_container_width=True,
+            hide_index=True
+        )
 
 # ======================================================
 # FINANCIAL
