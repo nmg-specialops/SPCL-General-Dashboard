@@ -9,6 +9,8 @@ from excel_parser import (
     agriculture_structure,
     get_column,
     get_metric,
+    social_employee_data,
+    social_fair_trade_data,
 )
 
 import streamlit as st
