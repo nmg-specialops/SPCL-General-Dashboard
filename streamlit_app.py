@@ -2,6 +2,7 @@ import streamlit.components.v1 as components
 
 from dashboard_utils import (
     load_workbook_from_dropbox,
+    load_social_workbook_from_dropbox,
     get_sheet,
 )
 
@@ -48,6 +49,7 @@ DROPBOX_URL = (
 try:
 
     wb = load_workbook_from_dropbox()
+    social_wb = load_social_workbook_from_dropbox()
 
     workbook_loaded = True
 
@@ -326,7 +328,11 @@ with social_tab:
     # Load Social worksheet
     # --------------------------------------------------
 
-    social_ws = get_sheet(wb, "Social")
+    employee_ws = get_sheet(social_wb, "Employees")
+    fair_trade_ws = get_sheet(social_wb, "FTP")
+
+    employee_data = social_employee_data(employee_ws)
+    fair_trade_data = social_fair_trade_data(fair_trade_ws)
 
     # --------------------------------------------------
     # Year selector
@@ -334,7 +340,10 @@ with social_tab:
 
     social_year = st.selectbox(
         "Year",
-        [2026, 2025, 2024, 2023, 2022],
+        sorted(
+            set(employee_data.keys()) | set(fair_trade_data.keys()),
+            reverse=True
+        ),
         key="social_year"
     )
 
@@ -345,10 +354,6 @@ with social_tab:
     # ==================================================
 
     st.subheader("👷 Serendipalm Employees")
-
-    employee_data = social_employee_data(
-        social_ws
-    )
 
     selected_employee_data = employee_data.get(
         social_year,
@@ -455,10 +460,6 @@ with social_tab:
 
     st.subheader(
         "🤝 Fair Trade Premium Spending"
-    )
-
-    fair_trade_data = social_fair_trade_data(
-        social_ws
     )
 
     selected_fair_trade = fair_trade_data.get(
