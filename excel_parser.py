@@ -243,3 +243,35 @@ def social_fair_trade_data(sheet):
         })
 
     return data
+
+
+def social_program_sheet_data(sheet):
+    """Read a narrative summary and row-based records from a Social program sheet."""
+    title = clean(sheet.cell(row=1, column=1).value) or sheet.title
+    summary = clean(sheet.cell(row=2, column=1).value)
+    responsible = clean(sheet.cell(row=5, column=2).value)
+
+    header_columns = []
+
+    for column in range(1, sheet.max_column + 1):
+        header = clean(sheet.cell(row=6, column=column).value)
+        if header:
+            header_columns.append((column, header))
+
+    records = []
+
+    for row in range(7, sheet.max_row + 1):
+        record = {
+            header: sheet.cell(row=row, column=column).value
+            for column, header in header_columns
+        }
+
+        if any(value not in [None, ""] for value in record.values()):
+            records.append(record)
+
+    return {
+        "title": title,
+        "summary": summary,
+        "responsible": responsible,
+        "records": records,
+    }
