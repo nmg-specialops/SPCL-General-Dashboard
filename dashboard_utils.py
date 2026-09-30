@@ -1,14 +1,14 @@
 import requests
 from io import BytesIO
 from openpyxl import load_workbook
-from openpyxl.cell.cell import MergedCell
 import streamlit as st
 
+
 # =====================================================
-# DROPBOX
+# DROPBOX WORKBOOKS
 # =====================================================
 
-DROPBOX_URL = (
+MASTER_DROPBOX_URL = (
     "https://www.dropbox.com/scl/fi/"
     "pm80k4kjyzqz8yez7sffu/"
     "SPCL_DataCollection-MasterSheet_forDASHBOARD.xlsx"
@@ -17,23 +17,36 @@ DROPBOX_URL = (
     "&dl=1"
 )
 
-# =====================================================
-# LOAD WORKBOOK
-# =====================================================
+SOCIAL_DROPBOX_URL = (
+    "https://www.dropbox.com/scl/fi/"
+    "a2myfdhttdaxwlbvtm469/"
+    "SPCL_SocialData_Input.xlsx"
+    "?rlkey=v94zr4qcm4f93lg9coc6r9kbp"
+    "&st=w3y8l7wf"
+    "&dl=1"
+)
 
-@st.cache_data(show_spinner=False)
-def load_workbook_from_dropbox():
 
-    response = requests.get(DROPBOX_URL)
-
+def _load_workbook_from_url(url):
+    response = requests.get(url, timeout=60)
     response.raise_for_status()
 
-    workbook = load_workbook(
+    return load_workbook(
         BytesIO(response.content),
         data_only=True
     )
 
-    return workbook
+
+@st.cache_data(show_spinner=False)
+def load_workbook_from_dropbox():
+    """Load the main workbook used by the Agriculture tab."""
+    return _load_workbook_from_url(MASTER_DROPBOX_URL)
+
+
+@st.cache_data(show_spinner=False)
+def load_social_workbook_from_dropbox():
+    """Load the separate workbook used by the Social tab."""
+    return _load_workbook_from_url(SOCIAL_DROPBOX_URL)
 
 
 # =====================================================
