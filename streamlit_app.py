@@ -12,6 +12,7 @@ from excel_parser import (
     get_metric,
     social_employee_data,
     social_fair_trade_data,
+    social_program_sheet_data,
 )
 
 import streamlit as st
@@ -76,6 +77,34 @@ def format_value(value):
         return f"{value:,.2f}"
 
     return str(value)
+
+
+def render_social_program(workbook, sheet_name):
+    """Render the summary and entered records for one Social workbook sheet."""
+    program = social_program_sheet_data(
+        get_sheet(workbook, sheet_name)
+    )
+
+    st.subheader(program["title"])
+
+    if program["summary"]:
+        st.info(program["summary"])
+    else:
+        st.info("Program summary has not been entered yet.")
+
+    if program["responsible"]:
+        st.caption(
+            f"Responsible for data: {program['responsible']}"
+        )
+
+    if program["records"]:
+        st.dataframe(
+            pd.DataFrame(program["records"]),
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.caption("No activity records have been entered yet.")
 
 # ======================================================
 # TITLE
@@ -321,263 +350,167 @@ with social_tab:
     st.header("👥 Social")
 
     st.caption(
-        "Social impact data from the SPCL master workbook."
+        "Social impact data from the SPCL Social Data Input workbook."
     )
 
-    # --------------------------------------------------
-    # Load Social worksheet
-    # --------------------------------------------------
-
-    employee_ws = get_sheet(social_wb, "Employees")
-    fair_trade_ws = get_sheet(social_wb, "FTP")
-
-    employee_data = social_employee_data(employee_ws)
-    fair_trade_data = social_fair_trade_data(fair_trade_ws)
-
-    # --------------------------------------------------
-    # Year selector
-    # --------------------------------------------------
-
-    social_year = st.selectbox(
-        "Year",
-        sorted(
-            set(employee_data.keys()) | set(fair_trade_data.keys()),
-            reverse=True
-        ),
-        key="social_year"
+    employee_data = social_employee_data(
+        get_sheet(social_wb, "Employees")
+    )
+    fair_trade_data = social_fair_trade_data(
+        get_sheet(social_wb, "FTP")
     )
 
-    st.divider()
-
-    # ==================================================
-    # SERENDIPALM EMPLOYEES
-    # ==================================================
-
-    st.subheader("👷 Serendipalm Employees")
-
-    selected_employee_data = employee_data.get(
-        social_year,
-        []
+    employees_view, wellbeing_view, community_view, farmer_finances_view, montessori_view, fair_trade_view = st.tabs(
+        [
+            "Employees, Wages & Benefits",
+            "Health & Wellbeing",
+            "Child & Livelihoods",
+            "Farmer Finances",
+            "Montessori",
+            "Fair Trade",
+        ]
     )
 
-    # --------------------------------------------------
-    # Employee totals
-    # --------------------------------------------------
-
-    total_male = 0
-    total_female = 0
-
-    for item in selected_employee_data:
-
-        if item["Type"] == "Total":
-
-            total_male = item["Male"]
-            total_female = item["Female"]
-
-    total_employees = total_male + total_female
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-
-        st.metric(
-            "Total Employees",
-            format_value(total_employees)
+    with employees_view:
+        employee_year = st.selectbox(
+            "Employee Year",
+            sorted(employee_data.keys(), reverse=True),
+            key="employee_year"
         )
 
-    with col2:
+        st.subheader("👷 Serendipalm Employees")
 
-        st.metric(
-            "Male",
-            format_value(total_male)
-        )
+        selected_employee_data = employee_data.get(employee_year, [])
+        total_male = 0
+        total_female = 0
 
-    with col3:
+        for item in selected_employee_data:
+            if item["Type"] == "Total":
+                total_male = item["Male"]
+                total_female = item["Female"]
 
-        st.metric(
-            "Female",
-            format_value(total_female)
-        )
+        total_employees = total_male + total_female
+        col1, col2, col3 = st.columns(3)
 
-    # --------------------------------------------------
-    # Employee table
-    # --------------------------------------------------
+        with col1:
+            st.metric("Total Employees", format_value(total_employees))
+        with col2:
+            st.metric("Male", format_value(total_male))
+        with col3:
+            st.metric("Female", format_value(total_female))
 
-    employee_rows = []
+        employee_rows = []
 
-    for item in selected_employee_data:
+        for item in selected_employee_data:
+            if item["Type"] != "Total":
+                employee_rows.append({
+                    "Employee Type": item["Type"],
+                    "Male": item["Male"],
+                    "Female": item["Female"],
+                    "Total": item["Male"] + item["Female"],
+                })
 
-        if item["Type"] != "Total":
-
-            total = (
-                item["Male"] +
-                item["Female"]
+        if employee_rows:
+            employee_df = pd.DataFrame(employee_rows)
+            st.dataframe(
+                employee_df,
+                use_container_width=True,
+                hide_index=True
+            )
+            st.subheader("Gender Distribution by Employee Type")
+            st.bar_chart(
+                employee_df.set_index("Employee Type")[["Male", "Female"]],
+                use_container_width=True
             )
 
-            employee_rows.append({
-                "Employee Type": item["Type"],
-                "Male": item["Male"],
-                "Female": item["Female"],
-                "Total": total,
-            })
+        st.divider()
+        render_social_program(social_wb, "Wages")
+        st.divider()
+        render_social_program(social_wb, "Employee Benefits")
 
-    if employee_rows:
+    with wellbeing_view:
+        render_social_program(social_wb, "Sex Ed")
+        st.divider()
+        render_social_program(social_wb, "Menopause")
+        st.divider()
+        render_social_program(social_wb, "Cups")
 
-        employee_df = pd.DataFrame(
-            employee_rows
+    with community_view:
+        render_social_program(social_wb, "Child Labor Prev.")
+        st.divider()
+        render_social_program(social_wb, "Income Div.")
+
+    with farmer_finances_view:
+        render_social_program(social_wb, "Farmer Finances")
+
+    with montessori_view:
+        render_social_program(social_wb, "Montessori")
+
+    with fair_trade_view:
+        fair_trade_year = st.selectbox(
+            "Fair Trade Year",
+            sorted(fair_trade_data.keys(), reverse=True),
+            key="fair_trade_year"
         )
 
-        st.dataframe(
-            employee_df,
-            use_container_width=True,
-            hide_index=True
+        st.subheader("🤝 Fair Trade Premium Spending")
+
+        selected_fair_trade = fair_trade_data.get(fair_trade_year, [])
+        total_spending = 0
+
+        for item in selected_fair_trade:
+            if item["Category"] == "Total":
+                total_spending = item["Amount"]
+
+        st.metric(
+            "Total Fair Trade Premium Spending",
+            format_value(total_spending)
         )
 
-    # --------------------------------------------------
-    # Employee gender chart
-    # --------------------------------------------------
-
-    st.subheader(
-        "Gender Distribution by Employee Type"
-    )
-
-    if employee_rows:
-
-        chart_df = employee_df.set_index(
-            "Employee Type"
-        )[["Male", "Female"]]
-
-        st.bar_chart(
-            chart_df,
-            use_container_width=True
-        )
-
-    st.divider()
-
-    # ==================================================
-    # FAIR TRADE PREMIUM
-    # ==================================================
-
-    st.subheader(
-        "🤝 Fair Trade Premium Spending"
-    )
-
-    selected_fair_trade = fair_trade_data.get(
-        social_year,
-        []
-    )
-
-    # --------------------------------------------------
-    # Total spending
-    # --------------------------------------------------
-
-    total_spending = 0
-
-    for item in selected_fair_trade:
-
-        if item["Category"] == "Total":
-
-            total_spending = item["Amount"]
-
-    st.metric(
-        "Total Fair Trade Premium Spending",
-        format_value(total_spending)
-    )
-
-    # --------------------------------------------------
-    # Spending table
-    # --------------------------------------------------
-
-    spending_rows = []
-
-    for item in selected_fair_trade:
-
-        if item["Category"] != "Total":
-
-            spending_rows.append({
+        spending_rows = [
+            {
                 "Category": item["Category"],
                 "Amount": item["Amount"],
+            }
+            for item in selected_fair_trade
+            if item["Category"] != "Total"
+        ]
+
+        if spending_rows:
+            spending_df = pd.DataFrame(spending_rows)
+            st.dataframe(
+                spending_df,
+                use_container_width=True,
+                hide_index=True
+            )
+            st.subheader("Fair Trade Premium Spending by Category")
+            st.bar_chart(
+                spending_df.set_index("Category")[["Amount"]],
+                use_container_width=True
+            )
+
+        st.divider()
+        st.subheader("📈 Fair Trade Premium Spending Over Time")
+
+        historical_rows = []
+
+        for year in sorted(fair_trade_data.keys()):
+            year_total = 0
+            for item in fair_trade_data[year]:
+                if item["Category"] == "Total":
+                    year_total = item["Amount"]
+            historical_rows.append({
+                "Year": year,
+                "Total Spending": year_total,
             })
 
-    if spending_rows:
-
-        spending_df = pd.DataFrame(
-            spending_rows
-        )
-
-        st.dataframe(
-            spending_df,
-            use_container_width=True,
-            hide_index=True
-        )
-
-    # --------------------------------------------------
-    # Spending chart
-    # --------------------------------------------------
-
-    st.subheader(
-        "Fair Trade Premium Spending by Category"
-    )
-
-    if spending_rows:
-
-        spending_chart = spending_df.set_index(
-            "Category"
-        )[["Amount"]]
-
-        st.bar_chart(
-            spending_chart,
-            use_container_width=True
-        )
-
-    st.divider()
-
-    # ==================================================
-    # FAIR TRADE HISTORICAL TREND
-    # ==================================================
-
-    st.subheader(
-        "📈 Fair Trade Premium Spending Over Time"
-    )
-
-    historical_rows = []
-
-    for year in sorted(
-        fair_trade_data.keys()
-    ):
-
-        year_total = 0
-
-        for item in fair_trade_data[year]:
-
-            if item["Category"] == "Total":
-
-                year_total = item["Amount"]
-
-        historical_rows.append({
-            "Year": year,
-            "Total Spending": year_total,
-        })
-
-    if historical_rows:
-
-        historical_df = pd.DataFrame(
-            historical_rows
-        )
-
-        historical_df = historical_df.set_index(
-            "Year"
-        )
-
-        # Keep years as labels rather than formatted numbers
-        historical_df.index = historical_df.index.astype(str)
-
-        st.line_chart(
-            historical_df[
-                ["Total Spending"]
-            ],
-            use_container_width=True
-        )
+        if historical_rows:
+            historical_df = pd.DataFrame(historical_rows).set_index("Year")
+            historical_df.index = historical_df.index.astype(str)
+            st.line_chart(
+                historical_df[["Total Spending"]],
+                use_container_width=True
+            )
 
 # ======================================================
 # FINANCIAL
