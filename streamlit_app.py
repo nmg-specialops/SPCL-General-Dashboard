@@ -564,18 +564,18 @@ with social_tab:
         )
 
         historical_df = historical_df.set_index(
-    "Year"
-)
+            "Year"
+        )
 
-# Keep years as labels rather than formatted numbers
-historical_df.index = historical_df.index.astype(str)
+        # Keep years as labels rather than formatted numbers
+        historical_df.index = historical_df.index.astype(str)
 
-st.line_chart(
-    historical_df[
-        ["Total Spending"]
-    ],
-    use_container_width=True
-)
+        st.line_chart(
+            historical_df[
+                ["Total Spending"]
+            ],
+            use_container_width=True
+        )
 
 # ======================================================
 # FINANCIAL
