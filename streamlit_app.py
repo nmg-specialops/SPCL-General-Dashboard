@@ -304,11 +304,11 @@ with production_tab:
     )
 
     components.iframe(
-    "https://charts.serendipalm.com/",
-    width=1400,
-    height=2400,
-    scrolling=True
-)
+        "https://charts.serendipalm.com/",
+        width=1400,
+        height=2400,
+        scrolling=True
+    )
 
 # ======================================================
 # SOCIAL
