@@ -1,39 +1,36 @@
 """
-excel_parser.py
-
-Parses the SPCL dashboard workbook into structures
-used by the Streamlit dashboard.
+Parses the SPCL dashboard workbooks into structures used by Streamlit.
 """
 
-# ------------------------------------------------------------------
-# Helper
-# ------------------------------------------------------------------
 
 def clean(value):
     if value is None:
         return ""
-
     return str(value).strip()
 
 
-# ------------------------------------------------------------------
-# Agriculture Structure
-# ------------------------------------------------------------------
+def number(value):
+    """Convert workbook values to numbers, treating blanks/dashes as zero."""
+    if value is None:
+        return 0
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        value = value.strip()
+        if value in ["", "-", "–", "—"]:
+            return 0
+        try:
+            return float(value.replace(",", ""))
+        except ValueError:
+            return 0
+    return 0
 
-STOP_HEADERS = [
-    "DAF Smallholders",
-    "DAF Serendipalm",
-    "TOTAL DAF",
-]
 
-SMALLHOLDER_HEADERS = [
-    "SPCL Smallholders",
-    "Tanoobia Smallholders",
-]
-
+# ==================================================================
+# AGRICULTURE
+# ==================================================================
 
 def agriculture_structure(sheet):
-
     structure = {
         "projects": {
             "Serendipalm": {
@@ -50,7 +47,6 @@ def agriculture_structure(sheet):
     col = 2
 
     while col <= sheet.max_column:
-
         header = clean(sheet.cell(row=6, column=col).value)
 
         if header == "":
@@ -63,10 +59,6 @@ def agriculture_structure(sheet):
             sheet.cell(row=7, column=col + 2).value,
         ]
 
-        # --------------------------------------------
-        # Serendipalm locations
-        # --------------------------------------------
-
         if header in [
             "Tweapease",
             "Abaam",
@@ -74,53 +66,33 @@ def agriculture_structure(sheet):
             "Old Cassava (other name?)",
             "Fante-Onomabo",
         ]:
-
             structure["projects"]["Serendipalm"]["locations"][header] = {
                 "column": col,
                 "years": years,
             }
-
-        # --------------------------------------------
-        # Smallholders
-        # --------------------------------------------
-
         elif header == "SPCL Smallholders":
-
             structure["projects"]["SPCL Smallholders"] = {
                 "column": col,
                 "years": years,
             }
-
         elif header == "Tanoobia Smallholders":
-
             structure["projects"]["Tanoobia Smallholders"] = {
                 "column": col,
                 "years": years,
             }
-
-        # --------------------------------------------
-        # Workbook totals
-        # --------------------------------------------
-
         elif header == "TOTAL Smallholders":
-
             structure["projects"]["Smallholders Total"] = {
                 "column": col,
                 "years": years,
             }
-
         elif header == "TOTAL Serendipalm":
-
             structure["projects"]["Serendipalm"]["column"] = col
             structure["projects"]["Serendipalm"]["years"] = years
-
         elif header == "TOTAL All Locations":
-
             structure["projects"]["All Projects"] = {
                 "column": col,
                 "years": years,
             }
-
             break
 
         col += 3
@@ -128,175 +100,111 @@ def agriculture_structure(sheet):
     return structure
 
 
-# ------------------------------------------------------------------
-# Metric Lookup
-# ------------------------------------------------------------------
-
 def get_metric(sheet, metric_name, column):
-
     for row in range(1, sheet.max_row + 1):
-
-        value = clean(
-            sheet.cell(row=row, column=1).value
-        )
-
+        value = clean(sheet.cell(row=row, column=1).value)
         if value == metric_name:
-
-            return sheet.cell(
-                row=row,
-                column=column
-            ).value
-
+            return sheet.cell(row=row, column=column).value
     return None
 
 
-# ------------------------------------------------------------------
-# Agriculture Year -> Column
-# ------------------------------------------------------------------
-
 def get_column(base_column, year):
-
     year_map = {
         2026: 0,
         2025: 1,
         2024: 2,
     }
-
     if year not in year_map:
         return None
-
     return base_column + year_map[year]
 
 
-# ------------------------------------------------------------------
-# List Metrics
-# ------------------------------------------------------------------
-
 def list_metrics(sheet):
-
     metrics = []
-
     for row in range(1, sheet.max_row + 1):
-
-        value = clean(
-            sheet.cell(row=row, column=1).value
-        )
-
+        value = clean(sheet.cell(row=row, column=1).value)
         if value != "":
             metrics.append(value)
-
     return metrics
 
 
 # ==================================================================
-# SOCIAL
+# SOCIAL — separate SPCL_SocialData_Input.xlsx workbook
 # ==================================================================
 
-# ------------------------------------------------------------------
-# Social Employee Data
-# ------------------------------------------------------------------
-
 def social_employee_data(sheet):
-
     """
-    Reads the Serendipalm Employees table.
+    Read the row-based Employees worksheet.
 
-    Source:
-        Social!A5:K12
-
-    Columns:
-        A = Employee Type
-        B-F = Male 2026-2022
-        G-K = Female 2026-2022
-
-    Returns a dictionary organized by year.
+    Columns beginning at row 7:
+        A = Year
+        B = Role Type
+        C = Employee Type (Male/Female)
+        D = Number of Employees
     """
-
-    years = [
-        2026,
-        2025,
-        2024,
-        2023,
-        2022,
-    ]
-
-    employee_types = [
+    role_types = [
         "Managerial",
         "Non-Managerial",
         "Temporary",
         "Piece Rate",
-        "Total",
     ]
+
+    grouped = {}
+
+    for row in range(7, sheet.max_row + 1):
+        year_value = sheet.cell(row=row, column=1).value
+        role = clean(sheet.cell(row=row, column=2).value)
+        gender = clean(sheet.cell(row=row, column=3).value)
+        count = number(sheet.cell(row=row, column=4).value)
+
+        if not isinstance(year_value, (int, float)):
+            continue
+        if role not in role_types or gender not in ["Male", "Female"]:
+            continue
+
+        year = int(year_value)
+        grouped.setdefault(
+            year,
+            {item: {"Male": 0, "Female": 0} for item in role_types}
+        )
+        grouped[year][role][gender] += count
 
     data = {}
 
-    for year_index, year in enumerate(years):
-
-        male_column = 2 + year_index
-        female_column = 7 + year_index
-
+    for year, roles in grouped.items():
         data[year] = []
+        total_male = 0
+        total_female = 0
 
-        for row in range(8, 13):
-
-            employee_type = clean(
-                sheet.cell(row=row, column=1).value
-            )
-
-            if employee_type not in employee_types:
-                continue
-
-            male = sheet.cell(
-                row=row,
-                column=male_column
-            ).value
-
-            female = sheet.cell(
-                row=row,
-                column=female_column
-            ).value
-
+        for role in role_types:
+            male = roles[role]["Male"]
+            female = roles[role]["Female"]
+            total_male += male
+            total_female += female
             data[year].append({
-                "Type": employee_type,
-                "Male": male if male is not None else 0,
-                "Female": female if female is not None else 0,
+                "Type": role,
+                "Male": male,
+                "Female": female,
             })
+
+        data[year].append({
+            "Type": "Total",
+            "Male": total_male,
+            "Female": total_female,
+        })
 
     return data
 
 
-# ------------------------------------------------------------------
-# Fair Trade Premium Data
-# ------------------------------------------------------------------
-
 def social_fair_trade_data(sheet):
-
     """
-    Reads the Fair Trade Premium Spending table.
+    Read the row-based FTP worksheet.
 
-    Source:
-        Social!A15:K23
-
-    Columns:
-        A = Spending Category
-        B-K = 2026-2017
-
-    Returns a dictionary organized by year.
+    Columns beginning at row 7:
+        A = Year
+        B = Project Type
+        C = Total Amount
     """
-
-    years = [
-        2026,
-        2025,
-        2024,
-        2023,
-        2022,
-        2021,
-        2020,
-        2019,
-        2018,
-        2017,
-    ]
-
     categories = [
         "Farmer Support",
         "Health",
@@ -304,47 +212,34 @@ def social_fair_trade_data(sheet):
         "Water & Sanitation",
         "Infrastructure",
         "Other",
-        "Total",
     ]
+
+    grouped = {}
+
+    for row in range(7, sheet.max_row + 1):
+        year_value = sheet.cell(row=row, column=1).value
+        category = clean(sheet.cell(row=row, column=2).value)
+        amount = number(sheet.cell(row=row, column=3).value)
+
+        if not isinstance(year_value, (int, float)):
+            continue
+        if category not in categories:
+            continue
+
+        year = int(year_value)
+        grouped.setdefault(year, {item: 0 for item in categories})
+        grouped[year][category] += amount
 
     data = {}
 
-    for year_index, year in enumerate(years):
-
-        column = 2 + year_index
-
-        data[year] = []
-
-        for row in range(17, 24):
-
-            category = clean(
-                sheet.cell(row=row, column=1).value
-            )
-
-            if category not in categories:
-                continue
-
-            value = sheet.cell(
-                row=row,
-                column=column
-            ).value
-
-            # Treat blanks and "-" as zero for dashboard calculations
-            if value is None:
-                value = 0
-
-            if isinstance(value, str):
-                if value.strip() in ["-", "–", "—"]:
-                    value = 0
-                else:
-                    try:
-                        value = float(value.replace(",", ""))
-                    except ValueError:
-                        value = 0
-
-            data[year].append({
-                "Category": category,
-                "Amount": value,
-            })
+    for year, spending in grouped.items():
+        data[year] = [
+            {"Category": category, "Amount": spending[category]}
+            for category in categories
+        ]
+        data[year].append({
+            "Category": "Total",
+            "Amount": sum(spending.values()),
+        })
 
     return data
