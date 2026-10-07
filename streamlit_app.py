@@ -140,14 +140,14 @@ st.divider()
 # TABS
 # ======================================================
 
-summary_tab, agri_tab, production_tab, social_tab, financial_tab, other_tab = st.tabs(
+summary_tab, agri_tab, production_tab, social_tab, financial_tab, plastics_tab = st.tabs(
     [
         "📊 Summary",
         "🌱 Agriculture",
         "🏭 Production",
         "👥 Social",
         "💰 Financial",
-        "📋 Other"
+        "♻️ Plastics"
     ]
 )
 
@@ -523,11 +523,11 @@ with financial_tab:
     st.info("Coming soon.")
 
 # ======================================================
-# OTHER
+# PLASTICS
 # ======================================================
 
-with other_tab:
+with plastics_tab:
 
-    st.header("📋 Other")
+    st.header("♻️ Plastics")
 
-    st.info("General worksheet will appear here.")
+    st.info("Plastic recycling data will appear here.")
